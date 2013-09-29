@@ -1,4 +1,4 @@
 <?php
-echo 'Hello World';
-echo 'This is by IbSDSDrahim';
+echo 'Hello World by shamol';
+echo 'I am efat';
 ?>
