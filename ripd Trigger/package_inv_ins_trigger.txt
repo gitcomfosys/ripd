@@ -1,0 +1,103 @@
+BEGIN
+
+DECLARE proid_value int; 
+DECLARE proqty_value int;
+DECLARE delvalue int;
+DECLARE addvalue int;
+DECLARE updatedqty int;
+DECLARE type varchar(10);
+DECLARE num_rows int default 0; 
+DECLARE done int default false; 
+DECLARE my_cursor1 CURSOR FOR SELECT product_chartid from package_details WHERE pckg_infoid = NEW.pckg_infoid;
+DECLARE my_cursor2 CURSOR FOR SELECT product_quantity from package_details WHERE pckg_infoid = NEW.pckg_infoid;
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = true;  
+	
+SET type = NEW.pckg_type;
+IF(type = 'making') THEN
+
+	SELECT pckg_name, pckg_code INTO @pckg_name, @pckg_code FROM package_info WHERE idpckginfo = NEW.pckg_infoid;
+	SELECT COUNT(*) INTO @count FROM inventory WHERE ins_productid = NEW.pckg_infoid AND ins_ons_type = NEW.ons_type AND ins_ons_id = NEW.ons_id;
+	IF (@count <= 0) THEN	
+	
+		INSERT INTO inventory (ins_ons_id, ins_ons_type, ins_buying_price, ins_sellingprice, ins_extra_profit, ins_profit, ins_pv, ins_how_many, ins_lastupdate, ins_product_code, ins_productname,ins_product_type, ins_productid)
+                VALUES (NEW.ons_id, NEW.ons_type, NEW.pckg_buying_price, NEW.pckg_selling_price, NEW.pckg_extraprofit, NEW.pckg_profit, NEW.pckg_pv, NEW.pckg_quantity, NEW.making_date, @pckg_code, @pckg_name, 'package',NEW.pckg_infoid);
+
+		OPEN my_cursor1; 
+		OPEN my_cursor2;
+
+		my_loop: loop
+
+    		SET done = false;
+
+    		FETCH my_cursor1 INTO proid_value;
+		FETCH my_cursor2 INTO proqty_value; 
+		SET delvalue = proqty_value * NEW.pckg_quantity;
+	
+    		IF done THEN
+      			LEAVE my_loop;
+    		END IF;
+
+		UPDATE inventory SET ins_how_many =  ins_how_many - delvalue WHERE ins_productid = proid_value AND ins_ons_type =NEW.ons_type AND ins_ons_id =NEW.ons_id;
+
+		END loop my_loop; 
+
+		CLOSE my_cursor1;
+		CLOSE my_cursor2;
+
+	ELSE
+		SET @exist = (SELECT ins_how_many FROM inventory WHERE ins_productid= NEW.pckg_infoid AND ins_ons_type=NEW.ons_type AND ins_ons_id =NEW.ons_id);
+                SET updatedqty = @exist + NEW.pckg_quantity;
+		UPDATE inventory SET ins_buying_price= NEW.pckg_buying_price,ins_sellingprice= NEW.pckg_selling_price,ins_extra_profit= NEW.pckg_extraprofit,ins_profit= NEW.pckg_profit,ins_pv= NEW.pckg_pv,ins_how_many= updatedqty,ins_lastupdate=NEW.making_date
+                WHERE ins_ons_id= NEW.ons_id AND ins_ons_type =NEW.ons_type AND ins_productid= NEW.pckg_infoid;
+
+		OPEN my_cursor1; 
+		OPEN my_cursor2;
+
+		my_loop: loop
+
+    		SET done = false;
+
+    		FETCH my_cursor1 INTO proid_value;
+		FETCH my_cursor2 INTO proqty_value; 
+		SET delvalue = proqty_value * NEW.pckg_quantity;
+	
+    		IF done THEN
+      			LEAVE my_loop;
+    		END IF;
+
+		UPDATE inventory SET ins_how_many =  ins_how_many - delvalue WHERE ins_productid = proid_value AND ins_ons_type =NEW.ons_type AND ins_ons_id =NEW.ons_id;
+
+		END loop my_loop; 
+
+		CLOSE my_cursor1;
+		CLOSE my_cursor2;
+	END IF;   
+
+ELSEIF(type = 'breaking') THEN
+
+UPDATE inventory SET ins_how_many =  ins_how_many - NEW.pckg_quantity WHERE ins_productid = NEW.pckg_infoid AND ins_ons_type =NEW.ons_type AND ins_ons_id =NEW.ons_id;
+
+OPEN my_cursor1; 
+OPEN my_cursor2;
+
+my_loop: loop
+
+    SET done = false;
+
+	FETCH my_cursor1 INTO proid_value;
+	FETCH my_cursor2 INTO proqty_value; 
+
+SET addvalue = proqty_value * NEW.pckg_quantity;
+	
+    IF done THEN
+      LEAVE my_loop;
+    END IF;
+
+UPDATE inventory SET ins_how_many =  ins_how_many + addvalue WHERE ins_productid = proid_value AND ins_ons_type =NEW.ons_type AND ins_ons_id =NEW.ons_id;
+
+END loop my_loop; 
+
+CLOSE my_cursor1;
+CLOSE my_cursor2; 
+END IF;
+END

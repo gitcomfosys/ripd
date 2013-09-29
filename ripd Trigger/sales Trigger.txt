@@ -1,0 +1,6 @@
+BEGIN 
+	SELECT sal_store_type, sal_storeid INTO @store_type , @store_id FROM sales_summery WHERE idsalessummery = NEW.sales_summery_idsalessummery;    
+	UPDATE inventory 
+                SET ins_how_many = ins_how_many - NEW.quantity
+            WHERE idinventory = NEW.inventory_idinventory AND ins_ons_id = @store_id AND ins_ons_type = @store_type ;
+END

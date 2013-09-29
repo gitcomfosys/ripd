@@ -1,0 +1,11 @@
+BEGIN 
+	IF ((SELECT COUNT(*) FROM inventory WHERE ins_productid = NEW.Product_chart_idproductchart AND ins_ons_type= NEW.in_ons_type AND ins_ons_id=NEW.in_onsid ) > 0) THEN
+            UPDATE inventory 
+                SET ins_how_many = ins_how_many + NEW.in_howmany
+            WHERE ins_productid = NEW.Product_chart_idproductchart;
+        ELSE
+        	SELECT pro_productname, pro_code INTO @pro_name, @pro_code FROM product_chart WHERE idproductchart = NEW.Product_chart_idproductchart;
+            INSERT INTO inventory (ins_productid, ins_how_many, ins_ons_id, ins_ons_type, ins_extra_profit, ins_sellingprice, ins_buying_price, ins_profit, ins_pv, ins_lastupdate, ins_product_type, ins_product_code, ins_productname)
+                VALUES (NEW.Product_chart_idproductchart, NEW.in_howmany, NEW.in_onsid, NEW.in_ons_type, NEW.in_extra_profit, NEW.in_sellingprice, NEW.in_buying_price, NEW.in_profit, NEW.in_pv, NEW.in_input_date, 'general', @pro_code, @pro_name);
+        END IF;
+    END

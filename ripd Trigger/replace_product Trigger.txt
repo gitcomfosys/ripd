@@ -1,0 +1,7 @@
+BEGIN               
+	SELECT reprosum_invoiceno, cfs_userid, reprosum_store_type, reprosum_storeid INTO @invoice_no, @user_id, @str_type, @str_id FROM replace_product_summary WHERE idreproductsum = NEW.replace_product_summary_idreproductsum;
+        SELECT ins_productid INTO @pro_id FROM inventory WHERE idinventory = NEW.inventory_idinventory;
+        SELECT sales_buying_price INTO @buy_prc FROM sales, sales_summery WHERE sales_summery_idsalessummery = idsalessummery AND sal_invoiceno = @invoice_no AND inventory_idinventory = NEW.inventory_idinventory;
+        INSERT INTO product_purchase (in_ons_type, in_ons_id, in_howmany, in_buying_price, cfs_user_idUser, Product_chart_idproductchart)
+        	VALUES (@str_type, @str_id, NEW.reppro_quantity, @buy_prc, @user_id, @pro_id);
+END
